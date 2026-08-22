@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Knot Locker | AppADay 107</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --canvas:#1F2A22;
+    --canvas-2:#26332A;
+    --canvas-3:#2E3D32;
+    --manila:#C9A876;
+    --manila-dim:#8A6F45;
+    --ember:#C1502E;
+    --parchment:#EDE6D6;
+    --ink:#16201A;
+    --line:#3E4C3D;
+    --good:#7AA874;
+    --bad:#C1502E;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    min-height:100dvh;
+    background:
+      radial-gradient(circle at 20% -10%, rgba(201,168,118,0.10), transparent 40%),
+      var(--canvas);
+    color:var(--parchment);
+    font-family:'Public Sans', system-ui, sans-serif;
+    display:flex;
+    flex-direction:column;
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.01ms !important; transition-duration:0.01ms !important;}
+  }
+  a{color:var(--manila);}
+  .backlink{
+    color:var(--manila);
+    text-decoration:none;
+    font-family:'JetBrains Mono', monospace;
+    font-size:0.72rem;
+    letter-spacing:0.04em;
+    border:1px solid var(--line);
+    padding:0.35rem 0.6rem;
+    border-radius:3px;
+    white-space:nowrap;
+  }
+  .backlink:hover{border-color:var(--manila);}
+
+  header.top{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:0.75rem;
+    padding:0.9rem 1rem;
+    border-bottom:1px solid var(--line);
+    position:sticky;
+    top:0;
+    background:var(--canvas);
+    z-index:20;
+  }
+  .brand{display:flex; flex-direction:column; gap:0.1rem; min-width:0;}
+  .brand .tag{
+    font-family:'JetBrains Mono', monospace;
+    font-size:0.65rem;
+    letter-spacing:0.14em;
+    color:var(--manila-dim);
+    text-transform:uppercase;
+  }
+  .brand h1{
+    margin:0;
+    font-family:'Oswald', sans-serif;
+    font-weight:600;
+    font-size:1.25rem;
+    letter-spacing:0.02em;
+    text-transform:uppercase;
+    color:var(--parchment);
+  }
+
+  main{flex:1; display:flex; flex-direction:column; min-height:0;}
+
+  .tabs{
+    display:flex;
+    gap:0;
+    border-bottom:1px solid var(--line);
+    background:var(--canvas-2);
+    position:sticky;
+    top:56px;
+    z-index:19;
+  }
+  .tab-btn{
+    flex:1;
+    padding:0.7rem 0.5rem;
+    background:transparent;
+    border:none;
+    color:var(--manila-dim);
+    font-family:'Oswald', sans-serif;
+    font-size:0.85rem;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    cursor:pointer;
+    border-bottom:2px solid transparent;
+  }
+  .tab-btn.active{
+    color:var(--parchment);
+    border-bottom-color:var(--ember);
+  }
+
+  .view{display:none; padding:1rem; flex:1;}
+  .view.active{display:block;}
+
+  .search-row{
+    display:flex;
+    gap:0.5rem;
+    margin-bottom:0.75rem;
+  }
+  .search-row input{
+    flex:1;
+    background:var(--canvas-2);
+    border:1px solid var(--line);
+    color:var(--parchment);
+    padding:0.6rem 0.7rem;
+    border-radius:4px;
+    font-family:'Public Sans', sans-serif;
+    font-size:0.95rem;
+  }
+  .search-row input::placeholder{color:#8b998c;}
+  .search-row input:focus{outline:2px solid var(--manila); outline-offset:1px;}
+
+  .chip-row{
+    display:flex;
+    gap:0.4rem;
+    overflow-x:auto;
+    padding-bottom:0.85rem;
+    margin-bottom:0.15rem;
+    scrollbar-width:none;
+  }
+  .chip-row::-webkit-scrollbar{display:none;}
+  .chip{
+    flex:0 0 auto;
+    background:var(--canvas-2);
+    border:1px solid var(--line);
+    color:var(--parchment);
+    font-family:'JetBrains Mono', monospace;
+    font-size:0.72rem;
+    letter-spacing:0.03em;
+    padding:0.4rem 0.7rem;
+    border-radius:20px;
+    cursor:pointer;
+  }
+  .chip.active{
+    background:var(--manila);
+    color:var(--ink);
+    border-color:var(--manila);
+    font-weight:600;
+  }
+
+  .grid{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:0.7rem;
+  }
+  @media (min-width:520px){
+    .grid{grid-template-columns:1fr 1fr;}
+  }
+
+  .knot-card{
+    background:var(--canvas-2);
+    border:1px solid var(--line);
+    border-radius:6px;
+    padding:0.85rem 0.9rem;
+    text-align:left;
+    cursor:pointer;
+    color:var(--parchment);
+    font:inherit;
+    display:flex;
+    flex-direction:column;
+    gap:0.4rem;
+    position:relative;
+    clip-path:polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%);
+  }
+  .knot-card:active{background:var(--canvas-3);}
+  .knot-card h3{
+    margin:0;
+    font-family:'Oswald', sans-serif;
+    font-size:1.05rem;
+    letter-spacing:0.01em;
+    text-transform:uppercase;
+    color:var(--manila);
+  }
+  .knot-card p{
+    margin:0;
+    font-size:0.85rem;
+    line-height:1.35;
+    color:#c9d1c6;
+  }
+  .knot-card .tags{
+    display:flex;
+    gap:0.3rem;
+    flex-wrap:wrap;
+    margin-top:0.15rem;
+  }
+  .tag-pill{
+    font-family:'JetBrains Mono', monospace;
+    font-size:0.62rem;
+    letter-spacing:0.03em;
+    text-transform:uppercase;
+    color:var(--manila-dim);
+    border:1px solid var(--line);
+    padding:0.15rem 0.4rem;
+    border-radius:3px;
+  }
+
+  .empty-state{
+    text-align:center;
+    padding:2rem 1rem;
+    color:#8b998c;
+    font-size:0.9rem;
+  }
+
+  /* Detail overlay */
+  .detail-overlay{
+    position:fixed;
+    inset:0;
+    background:var(--canvas);
+    z-index:40;
+    display:none;
+    flex-direction:column;
+  }
+  .detail-overlay.active{display:flex;}
+  .detail-head{
+    display:flex;
+    align-items:center;
+    gap:0.6rem;
+    padding:0.9rem 1rem;
+    border-bottom:1px solid var(--line);
+  }
+  .close-btn{
+    background:var(--canvas-2);
+    border:1px solid var(--line);
+    color:var(--parchment);
+    width:2.2rem;
+    height:2.2rem;
+    border-radius:50%;
+    font-size:1.1rem;
+    line-height:1;
+    cursor:pointer;
+  }
+  .detail-head h2{
+    margin:0;
+    font-family:'Oswald', sans-serif;
+    font-size:1.15rem;
+    text-transform:uppercase;
+    letter-spacing:0.02em;
+    color:var(--manila);
+  }
+  .detail-body{
+    flex:1;
+    overflow-y:auto;
+    padding:1rem;
+    display:flex;
+    flex-direction:column;
+    gap:0.9rem;
+  }
+  .detail-summary{
+    font-size:0.9rem;
+    color:#c9d1c6;
+    line-height:1.4;
+  }
+  .step-frame{
+    background:var(--canvas-2);
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:1rem;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:0.6rem;
+  }
+  .step-counter{
+    font-family:'JetBrains Mono', monospace;
+    font-size:0.72rem;
+    letter-spacing:0.05em;
+    color:var(--manila-dim);
+    align-self:flex-start;
+  }
+  .step-svg-wrap{
+    width:100%;
+    max-width:260px;
+    aspect-ratio:1/1;
+    background:var(--parchment);
+    border-radius:6px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .step-svg-wrap svg{width:85%; height:85%;}
+  .step-caption{
+    font-size:0.95rem;
+    text-align:center;
+    line-height:1.4;
+    color:var(--parchment);
+  }
+  .step-nav{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:0.6rem;
+  }
+  .step-nav button{
+    background:var(--manila);
+    color:var(--ink);
+    border:none;
+    font-family:'Oswald', sans-serif;
+    font-weight:600;
+    letter-spacing:0.03em;
+    text-transform:uppercase;
+    font-size:0.8rem;
+    padding:0.6rem 1rem;
+    border-radius:5px;
+    cursor:pointer;
+    flex:1;
+  }
+  .step-nav button:disabled{opacity:0.35; cursor:default;}
+  .step-dots{
+    display:flex;
+    gap:0.3rem;
+    justify-content:center;
+  }
+  .step-dots span{
+    width:6px; height:6px; border-radius:50%;
+    background:var(--line);
+  }
+  .step-dots span.on{background:var(--ember);}
+
+  /* Quiz */
+  .quiz-card{
+    background:var(--canvas-2);
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:1.1rem;
+    display:flex;
+    flex-direction:column;
+    gap:0.9rem;
+    max-width:480px;
+    margin:0 auto;
+  }
+  .quiz-progress{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    font-family:'JetBrains Mono', monospace;
+    font-size:0.72rem;
+    color:var(--manila-dim);
+    letter-spacing:0.04em;
+  }
+  .quiz-svg-wrap{
+    background:var(--parchment);
+    border-radius:6px;
+    padding:1rem;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .quiz-svg-wrap svg{width:60%; max-width:150px;}
+  .quiz-question{
+    font-family:'Oswald', sans-serif;
+    font-size:1.05rem;
+    text-transform:uppercase;
+    letter-spacing:0.01em;
+    text-align:center;
+    color:var(--parchment);
+  }
+  .quiz-options{
+    display:flex;
+    flex-direction:column;
+    gap:0.5rem;
+  }
+  .quiz-opt{
+    background:var(--canvas-3);
+    border:1px solid var(--line);
+    color:var(--parchment);
+    padding:0.75rem 0.8rem;
+    border-radius:5px;
+    text-align:left;
+    font-size:0.92rem;
+    cursor:pointer;
+    font-family:'Public Sans', sans-serif;
+  }
+  .quiz-opt.correct{border-color:var(--good); background:rgba(122,168,116,0.18);}
+  .quiz-opt.wrong{border-color:var(--bad); background:rgba(193,80,46,0.18);}
+  .quiz-opt:disabled{cursor:default;}
+  .quiz-next{
+    background:var(--ember);
+    color:var(--parchment);
+    border:none;
+    font-family:'Oswald', sans-serif;
+    font-weight:600;
+    letter-spacing:0.03em;
+    text-transform:uppercase;
+    font-size:0.85rem;
+    padding:0.7rem;
+    border-radius:5px;
+    cursor:pointer;
+    display:none;
+  }
+  .quiz-next.show{display:block;}
+  .quiz-start,.quiz-summary{
+    max-width:480px;
+    margin:0 auto;
+    text-align:center;
+    padding:1.5rem 1rem;
+    display:flex;
+    flex-direction:column;
+    gap:0.9rem;
+  }
+  .quiz-start h2, .quiz-summary h2{
+    font-family:'Oswald', sans-serif;
+    text-transform:uppercase;
+    color:var(--manila);
+    margin:0;
+  }
+  .quiz-start p, .quiz-summary p{color:#c9d1c6; font-size:0.9rem; line-height:1.4; margin:0;}
+  .big-btn{
+    background:var(--manila);
+    color:var(--ink);
+    border:none;
+    font-family:'Oswald', sans-serif;
+    font-weight:600;
+    letter-spacing:0.03em;
+    text-transform:uppercase;
+    font-size:0.9rem;
+    padding:0.8rem 1.2rem;
+    border-radius:6px;
+    cursor:pointer;
+  }
+  .score-big{
+    font-family:'JetBrains Mono', monospace;
+    font-size:2.4rem;
+    font-weight:600;
+    color:var(--parchment);
+  }
+  .missed-list{
+    text-align:left;
+    background:var(--canvas-3);
+    border:1px solid var(--line);
+    border-radius:6px;
+    padding:0.8rem 0.9rem;
+    font-size:0.85rem;
+    line-height:1.5;
+  }
+  .missed-list strong{color:var(--manila);}
+
+  footer.bottom{
+    display:flex;
+    justify-content:center;
+    padding:1.1rem;
+    border-top:1px solid var(--line);
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="brand">
+    <span class="tag">AppADay No. 107</span>
+    <h1>Knot Locker</h1>
+  </div>
+  <a class="backlink" href="https://augustineiacopelli.github.io/appaday/">&larr; Portfolio</a>
+</header>
+
+<div class="tabs">
+  <button class="tab-btn active" data-tab="guide">Field Guide</button>
+  <button class="tab-btn" data-tab="drill">Drill</button>
+</div>
+
+<main>
+  <section id="view-guide" class="view active">
+    <div class="search-row">
+      <input id="searchInput" type="text" placeholder="Search knots..." autocomplete="off">
+    </div>
+    <div class="chip-row" id="chipRow"></div>
+    <div class="grid" id="knotGrid"></div>
+    <div class="empty-state" id="emptyState" style="display:none;">No knots match that search.</div>
+  </section>
+
+  <section id="view-drill" class="view">
+    <div id="quizStart" class="quiz-start">
+      <h2>Knot Drill</h2>
+      <p>Five questions. Each one shows a knot's diagram &mdash; name it or name its job. Missed knots get flagged for review.</p>
+      <button class="big-btn" id="startQuizBtn">Start Drill</button>
+      <div id="bestScoreLine" style="font-family:'JetBrains Mono',monospace; font-size:0.75rem; color:var(--manila-dim);"></div>
+    </div>
+
+    <div id="quizPlay" class="quiz-card" style="display:none;">
+      <div class="quiz-progress">
+        <span id="quizProgress">Question 1 of 5</span>
+        <span id="quizScoreLive">Score: 0</span>
+      </div>
+      <div class="quiz-svg-wrap" id="quizSvgWrap"></div>
+      <div class="quiz-question" id="quizQuestion"></div>
+      <div class="quiz-options" id="quizOptions"></div>
+      <button class="quiz-next" id="quizNextBtn">Next</button>
+    </div>
+
+    <div id="quizSummary" class="quiz-summary" style="display:none;">
+      <h2>Drill Complete</h2>
+      <div class="score-big" id="finalScore">0/5</div>
+      <div id="missedWrap"></div>
+      <button class="big-btn" id="retakeBtn">Retake Drill</button>
+    </div>
+  </section>
+</main>
+
+<footer class="bottom">
+  <a class="backlink" href="https://augustineiacopelli.github.io/appaday/">&larr; Back to AppADay Portfolio</a>
+</footer>
+
+<div class="detail-overlay" id="detailOverlay">
+  <div class="detail-head">
+    <button class="close-btn" id="closeDetailBtn" aria-label="Close">&times;</button>
+    <h2 id="detailTitle"></h2>
+  </div>
+  <div class="detail-body">
+    <div class="detail-summary" id="detailSummary"></div>
+    <div class="step-frame">
+      <span class="step-counter" id="stepCounter"></span>
+      <div class="step-svg-wrap" id="stepSvgWrap"></div>
+      <div class="step-caption" id="stepCaption"></div>
+      <div class="step-dots" id="stepDots"></div>
+      <div class="step-nav">
+        <button id="prevStepBtn">&larr; Prev</button>
+        <button id="nextStepBtn">Next &rarr;</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var CAT_LABELS = { setup:"Camp Setup", firstaid:"First Aid", utility:"General Utility" };
+
+  function P(d){
+    return '<path d="'+d+'" stroke="#3B2A1A" stroke-width="11" fill="none" stroke-linecap="round" stroke-linejoin="round"/>';
+  }
+  function O(cx,cy,r){
+    return '<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" stroke="#3B2A1A" stroke-width="11" fill="none"/>';
+  }
+  function D(parts){
+    return '<svg viewBox="0 0 200 200">'+parts.join('')+'</svg>';
+  }
+
+  var KNOTS = [
+    {
+      id:"bowline",
+      name:"Bowline",
+      categories:["setup","utility"],
+      summary:"A fixed loop that will not slip or tighten under load, and still unties easily afterward. The knot every scout learns first.",
+      quizPrompt:"This knot forms a fixed loop that will not slip under load, yet still unties easily by hand. Which knot is it?",
+      distractors:["Clove Hitch","Square Knot","Taut-Line Hitch"],
+      steps:[
+        {cap:"Cross the working end over the standing part to form a small loop. This is 'the hole.'",
+         svg:D([O(100,90,35), P("M15,90 L65,90"), P("M100,125 C110,150 130,165 155,180")])},
+        {cap:"Bring the working end up through the loop from underneath. 'The rabbit comes out of the hole.'",
+         svg:D([O(100,90,35), P("M15,90 L65,90"), P("M155,180 C130,165 110,150 100,125"), P("M100,55 C95,40 95,25 95,15")])},
+        {cap:"Take the working end around behind the standing part, then back down through the loop. 'Around the tree, back down the hole.'",
+         svg:D([O(100,90,35), P("M15,90 L65,90"), P("M100,125 C110,150 130,165 155,180"), P("M95,15 C60,15 30,30 30,55 C30,75 50,80 65,68")])},
+        {cap:"Pull the standing part and loop snug. The bowline is set and will hold its shape.",
+         svg:D([P("M100,20 L100,58"), O(100,72,15), P("M100,87 C130,95 135,130 110,150 C90,165 65,150 68,128 C70,112 88,105 96,84")])}
+      ]
+    },
+    {
+      id:"clove-hitch",
+      name:"Clove Hitch",
+      categories:["setup"],
+      summary:"A quick hitch for attaching a rope to a post or pole, such as staking out a tent guy line or lashing the start of a project.",
+      quizPrompt:"Which knot is the fast go-to for tying a rope to a post or pole at a campsite, like starting a lashing or a guy line?",
+      distractors:["Bowline","Two Half Hitches","Square Knot"],
+      steps:[
+        {cap:"Lay the rope against the post, then wrap it once around.",
+         svg:D([P("M30,40 L30,170"), P("M15,70 C60,60 60,100 15,90")])},
+        {cap:"Cross over the first wrap and start a second wrap around the post.",
+         svg:D([P("M30,40 L30,170"), P("M15,70 C60,60 60,100 15,90"), P("M15,120 C60,110 60,150 15,140")])},
+        {cap:"Tuck the working end under the second wrap, forming an X against the post.",
+         svg:D([P("M30,40 L30,170"), P("M15,70 C60,60 60,100 15,90"), P("M15,120 C55,112 62,95 40,88 C25,83 15,95 20,105")])},
+        {cap:"Pull both ends snug. The two wraps bite against each other and lock in place.",
+         svg:D([P("M30,40 L30,170"), P("M15,70 C60,60 60,100 20,92"), P("M18,122 C55,112 62,95 42,88 L20,105")])}
+      ]
+    },
+    {
+      id:"taut-line",
+      name:"Taut-Line Hitch",
+      categories:["setup"],
+      summary:"An adjustable loop that grips under tension but slides by hand when slack. Ideal for tent guy lines that need tightening after rain.",
+      quizPrompt:"Which knot creates an adjustable loop for a tent guy line, one that holds tight under tension but slides to re-tension by hand?",
+      distractors:["Clove Hitch","Bowline","Square Knot"],
+      steps:[
+        {cap:"Wrap the working end twice around the standing line, working toward the anchor.",
+         svg:D([P("M20,170 L170,30"), P("M60,132 C68,118 78,110 90,100")])},
+        {cap:"Add one more wrap on the outside of the first two, closer to the tent stake.",
+         svg:D([P("M20,170 L170,30"), P("M60,132 C68,118 78,110 90,100"), P("M68,145 C76,131 86,123 98,113")])},
+        {cap:"Snug the wraps against each other. Slide the whole hitch to adjust tension.",
+         svg:D([P("M20,170 L170,30"), P("M60,132 C68,118 78,110 90,100"), P("M68,145 C76,131 86,123 98,113"), P("M78,155 C90,140 100,132 112,122")])}
+      ]
+    },
+    {
+      id:"square-knot",
+      name:"Square Knot",
+      categories:["firstaid","utility"],
+      summary:"Joins two ropes of similar thickness, or ties off a bandage. Lies flat and is easy to check by eye: 'right over left, left over right.'",
+      quizPrompt:"Which knot joins two rope ends of the same thickness, or ties off a bandage, and lies flat when done correctly?",
+      distractors:["Bowline","Clove Hitch","Taut-Line Hitch"],
+      steps:[
+        {cap:"Bring the two ends together, right over left.",
+         svg:D([P("M25,55 C65,55 85,75 100,100"), P("M175,55 C135,55 115,75 100,100")])},
+        {cap:"Tuck the right end under and pull through. First cross made.",
+         svg:D([P("M25,55 C65,55 90,80 130,110 C150,125 160,140 175,150"), P("M175,55 C155,70 145,85 100,100")])},
+        {cap:"Cross the left end over the right end and tuck it under.",
+         svg:D([P("M25,150 C65,150 90,125 130,95 C150,80 160,65 175,55"), P("M175,150 C135,150 115,125 100,100"), P("M25,55 C65,55 90,80 130,110 C150,125 160,140 175,150")])},
+        {cap:"Pull all four ends evenly. Done right, it lies flat like this; done wrong, it slips into a granny knot.",
+         svg:D([P("M20,70 C60,70 60,100 90,100 C110,100 110,70 150,70"), P("M20,130 C60,130 60,100 90,100 C110,100 110,130 150,130")])}
+      ]
+    },
+    {
+      id:"two-half-hitches",
+      name:"Two Half Hitches",
+      categories:["setup","utility"],
+      summary:"A simple, reliable way to secure a rope end to a post, ring, or tree, used for tying off a canoe or a tarp corner.",
+      quizPrompt:"Which simple, reliable knot secures a rope end to a post or ring, commonly used to tie off a canoe or a tarp line?",
+      distractors:["Square Knot","Taut-Line Hitch","Bowline"],
+      steps:[
+        {cap:"Pass the working end around the post or ring.",
+         svg:D([P("M15,100 L150,100"), P("M150,70 C175,80 175,120 150,130")])},
+        {cap:"Tie a half hitch: cross the working end over the standing part and tuck it through.",
+         svg:D([P("M15,100 L150,100"), P("M150,70 C175,80 175,120 150,130"), P("M150,88 C130,100 130,130 155,140")])},
+        {cap:"Tie a second, identical half hitch just below the first.",
+         svg:D([P("M15,100 L150,100"), P("M150,70 C175,80 175,120 150,130"), P("M150,88 C130,100 130,130 155,140"), P("M155,110 C138,118 138,148 162,158")])},
+        {cap:"Slide both hitches snug against the post. Two half hitches will not slip.",
+         svg:D([P("M15,100 C60,100 90,100 108,95"), O(122,90,14), O(122,120,14), P("M108,95 C100,105 100,120 118,122")])}
+      ]
+    }
+  ];
+
+  var state = { search:"", cat:"all", detailKnot:null, stepIdx:0, quiz:null };
+
+  function $(id){ return document.getElementById(id); }
+
+  // ---- Tabs ----
+  document.querySelectorAll(".tab-btn").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      document.querySelectorAll(".tab-btn").forEach(function(b){ b.classList.remove("active"); });
+      document.querySelectorAll(".view").forEach(function(v){ v.classList.remove("active"); });
+      btn.classList.add("active");
+      $("view-"+btn.dataset.tab).classList.add("active");
+    });
+  });
+
+  // ---- Chips ----
+  var cats = ["all","setup","firstaid","utility"];
+  var chipRow = $("chipRow");
+  cats.forEach(function(c){
+    var b = document.createElement("button");
+    b.className = "chip" + (c==="all" ? " active" : "");
+    b.textContent = c === "all" ? "All Knots" : CAT_LABELS[c];
+    b.dataset.cat = c;
+    b.addEventListener("click", function(){
+      document.querySelectorAll(".chip").forEach(function(x){ x.classList.remove("active"); });
+      b.classList.add("active");
+      state.cat = c;
+      renderGrid();
+    });
+    chipRow.appendChild(b);
+  });
+
+  $("searchInput").addEventListener("input", function(e){
+    state.search = e.target.value.trim().toLowerCase();
+    renderGrid();
+  });
+
+  function renderGrid(){
+    var grid = $("knotGrid");
+    grid.innerHTML = "";
+    var results = KNOTS.filter(function(k){
+      var matchesCat = state.cat === "all" || k.categories.indexOf(state.cat) !== -1;
+      var matchesSearch = !state.search || k.name.toLowerCase().indexOf(state.search) !== -1 || k.summary.toLowerCase().indexOf(state.search) !== -1;
+      return matchesCat && matchesSearch;
+    });
+    $("emptyState").style.display = results.length ? "none" : "block";
+    results.forEach(function(k){
+      var card = document.createElement("button");
+      card.className = "knot-card";
+      var tagsHtml = k.categories.map(function(c){ return '<span class="tag-pill">'+CAT_LABELS[c]+'</span>'; }).join("");
+      card.innerHTML = '<h3>'+k.name+'</h3><p>'+k.summary+'</p><div class="tags">'+tagsHtml+'</div>';
+      card.addEventListener("click", function(){ openDetail(k); });
+      grid.appendChild(card);
+    });
+  }
+
+  // ---- Detail / stepper ----
+  function openDetail(k){
+    state.detailKnot = k;
+    state.stepIdx = 0;
+    $("detailTitle").textContent = k.name;
+    $("detailSummary").textContent = k.summary;
+    renderStep();
+    $("detailOverlay").classList.add("active");
+  }
+  function closeDetail(){
+    $("detailOverlay").classList.remove("active");
+    state.detailKnot = null;
+  }
+  $("closeDetailBtn").addEventListener("click", closeDetail);
+
+  function renderStep(){
+    var k = state.detailKnot;
+    if(!k) return;
+    var step = k.steps[state.stepIdx];
+    $("stepCounter").textContent = "Step "+(state.stepIdx+1)+" of "+k.steps.length;
+    $("stepSvgWrap").innerHTML = step.svg;
+    $("stepCaption").textContent = step.cap;
+    var dots = $("stepDots");
+    dots.innerHTML = "";
+    k.steps.forEach(function(_, i){
+      var d = document.createElement("span");
+      if(i === state.stepIdx) d.className = "on";
+      dots.appendChild(d);
+    });
+    $("prevStepBtn").disabled = state.stepIdx === 0;
+    $("nextStepBtn").disabled = state.stepIdx === k.steps.length - 1;
+  }
+  $("prevStepBtn").addEventListener("click", function(){
+    if(state.stepIdx > 0){ state.stepIdx--; renderStep(); }
+  });
+  $("nextStepBtn").addEventListener("click", function(){
+    var k = state.detailKnot;
+    if(k && state.stepIdx < k.steps.length - 1){ state.stepIdx++; renderStep(); }
+  });
+
+  // ---- Storage helpers ----
+  function loadBestScore(){
+    try{
+      var v = localStorage.getItem("knotlocker-best-score");
+      return v ? parseInt(v,10) : null;
+    }catch(e){ return null; }
+  }
+  function saveBestScore(score){
+    try{
+      var cur = loadBestScore();
+      if(cur === null || score > cur){
+        localStorage.setItem("knotlocker-best-score", String(score));
+      }
+    }catch(e){ /* ignore */ }
+  }
+  function saveMissed(list){
+    try{
+      localStorage.setItem("knotlocker-missed", JSON.stringify(list));
+    }catch(e){ /* ignore */ }
+  }
+
+  function refreshBestScoreLine(){
+    var best = loadBestScore();
+    $("bestScoreLine").textContent = best !== null ? ("Best score: "+best+"/5") : "";
+  }
+  refreshBestScoreLine();
+
+  // ---- Quiz ----
+  function shuffle(arr){
+    var a = arr.slice();
+    for(var i=a.length-1;i>0;i--){
+      var j = Math.floor(Math.random()*(i+1));
+      var t = a[i]; a[i]=a[j]; a[j]=t;
+    }
+    return a;
+  }
+
+  function startQuiz(){
+    var order = shuffle(KNOTS);
+    state.quiz = { order:order, idx:0, score:0, missed:[], answered:false };
+    $("quizStart").style.display = "none";
+    $("quizSummary").style.display = "none";
+    $("quizPlay").style.display = "flex";
+    renderQuizQuestion();
+  }
+
+  function renderQuizQuestion(){
+    var q = state.quiz;
+    var knot = q.order[q.idx];
+    q.answered = false;
+    $("quizProgress").textContent = "Question "+(q.idx+1)+" of "+q.order.length;
+    $("quizScoreLive").textContent = "Score: "+q.score;
+    $("quizSvgWrap").innerHTML = knot.steps[knot.steps.length-1].svg;
+    $("quizQuestion").textContent = knot.quizPrompt;
+
+    var options = shuffle([knot.name].concat(knot.distractors));
+    var optWrap = $("quizOptions");
+    optWrap.innerHTML = "";
+    options.forEach(function(optName){
+      var b = document.createElement("button");
+      b.className = "quiz-opt";
+      b.textContent = optName;
+      b.addEventListener("click", function(){ answerQuiz(optName, knot, b); });
+      optWrap.appendChild(b);
+    });
+    $("quizNextBtn").classList.remove("show");
+  }
+
+  function answerQuiz(chosen, knot, btnEl){
+    var q = state.quiz;
+    if(q.answered) return;
+    q.answered = true;
+    var correct = chosen === knot.name;
+    if(correct){ q.score++; } else { q.missed.push(knot.name); }
+    document.querySelectorAll(".quiz-opt").forEach(function(b){
+      b.disabled = true;
+      if(b.textContent === knot.name) b.classList.add("correct");
+      else if(b === btnEl) b.classList.add("wrong");
+    });
+    $("quizScoreLive").textContent = "Score: "+q.score;
+    $("quizNextBtn").classList.add("show");
+  }
+
+  $("quizNextBtn").addEventListener("click", function(){
+    var q = state.quiz;
+    q.idx++;
+    if(q.idx >= q.order.length){
+      finishQuiz();
+    } else {
+      renderQuizQuestion();
+    }
+  });
+
+  function finishQuiz(){
+    var q = state.quiz;
+    $("quizPlay").style.display = "none";
+    $("quizSummary").style.display = "flex";
+    $("finalScore").textContent = q.score+"/"+q.order.length;
+    saveBestScore(q.score);
+    saveMissed(q.missed);
+    var missedWrap = $("missedWrap");
+    if(q.missed.length){
+      missedWrap.innerHTML = '<div class="missed-list"><strong>Review these:</strong><br>'+q.missed.join(", ")+'</div>';
+    } else {
+      missedWrap.innerHTML = '<div class="missed-list"><strong>Clean sweep.</strong> No knots missed this round.</div>';
+    }
+    refreshBestScoreLine();
+  }
+
+  $("startQuizBtn").addEventListener("click", startQuiz);
+  $("retakeBtn").addEventListener("click", startQuiz);
+
+  // ---- Init ----
+  renderGrid();
+})();
+</script>
+</body>
+</html>
